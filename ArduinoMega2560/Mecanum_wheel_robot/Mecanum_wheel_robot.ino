@@ -3,13 +3,16 @@ MECANUM WHEEL ROBOT - BLUETOOTH CONTROLLED v1.0
  - Allows you to control a mecanum robot via bluetooth
  - Tested with Arduino Mega 2560
  - Android application - https://play.google.com/store/apps/details?id=pl.mobilerobots.vacuumcleanerrobot&hl=pl
+ - Project description - http://www.instructables.com/id/Mecanum-wheel-robot-bluetooth-controlled
  Author: Adam Srebro
  www: http://www.mobilerobots.pl/
  
  Connections:
  Bluetooth (e.g HC-06)-> Arduino Mega 2560
- Rx - Tx 
- Tx - Rx 
+ TXD - TX1 (19)
+ RXD - RX1 (18)
+ VCC - 5V
+ GND - GND
  
  TB6612FNG Dual Motor Driver -> Arduino Mega 2560
  //PWM control
@@ -18,14 +21,14 @@ MECANUM WHEEL ROBOT - BLUETOOTH CONTROLLED v1.0
  RightRearMotor_PWMA - 4
  LeftRearMotor_PWMB - 5
  //Control of rotation direction
- RightFrontMotor_AIN1 = 22
- RightFrontMotor_AIN2 = 23
+ RightFrontMotor_AIN1 - 22
+ RightFrontMotor_AIN2 - 23
  LeftFrontMotor_BIN1 - 24
- LeftFrontMotor_BIN2 = 25
- RightRearMotor_AIN1 = 26
- RightRearMotor_AIN2 = 27
- LeftRearMotor_BIN1 = 28
- LeftRearMotor_BIN2 = 29
+ LeftFrontMotor_BIN2 - 25
+ RightRearMotor_AIN1 - 26
+ RightRearMotor_AIN2 - 27
+ LeftRearMotor_BIN1 - 28
+ LeftRearMotor_BIN2 - 29
  //The module and motors power supply
  STBY - Vcc
  VMOT - motor voltage (4.5 to 13.5 V) - 11.1V from LiPo battery
@@ -166,7 +169,15 @@ void processInput (){
   case 'l':
     moveLeft(255);
     break;
+    
+  case 'i':
+    turnRight(255);
+    break;
 
+  case 'j':
+    turnLeft(255);
+    break;
+    
   case 'c': // Top Right
     moveRightForward(255);
     break; 
@@ -260,6 +271,20 @@ void moveLeftBackward(int mspeed){
   motorControl("rr", -1, mspeed);
   motorControl("lr", 1, 0);
 }// void  moveLeftBackward(int mspeed)
+
+void turnRight(int mspeed){
+  motorControl("rf", -1, mspeed);
+  motorControl("lf", 1, mspeed);
+  motorControl("rr", -1, mspeed);
+  motorControl("lr", 1, mspeed);
+}// void turnRight(int mspeed)
+
+void turnLeft(int mspeed){
+  motorControl("rf", 1, mspeed);
+  motorControl("lf", -1, mspeed);
+  motorControl("rr", 1, mspeed);
+  motorControl("lr", -1, mspeed);
+}// void turnRight(int mspeed)
 
 void stopRobot(int delay_ms){
   analogWrite(RightFrontMotor_PWM, 0);
