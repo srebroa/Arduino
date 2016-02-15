@@ -1,5 +1,5 @@
 
-/*IR_GP2Y0A21YK_test1 - Print the distance from the IR proximity sensor Sharp GP2Y0A21YK
+/*IR_GP2Y0A21YK_test1 - Print the distance from the IR proximity sensor Sharp GP2Y0A21YK (10-80 cm)
 
 Connections:
  GP2Y0A21YK -> Arduino Mega 2560

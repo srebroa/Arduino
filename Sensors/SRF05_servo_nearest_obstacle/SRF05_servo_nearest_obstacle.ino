@@ -16,12 +16,14 @@ Connections:
 #include <Servo.h>  // servo library, note that this library disables PWM on pins 9 and 10!
 #define TRIG 11 // the SRF05 Trig pin
 #define ECHO 12 // the SRF05 Echo pin
-#define SENSOR_STEP 5 // 5 degrees
+#define SENSOR_STEP 10 // 5 degrees
+#define NUMBER_OF_REPEATED_MEASURES 3
 int numberOfSteps = int(180 / SENSOR_STEP);
 unsigned long pulseTime;
 unsigned long srfDistanceArray[180 / SENSOR_STEP]; // 180/step (where step is equal to 5)
 unsigned long minimumDistanceThreshold = 5;
 unsigned long maximumDistanceThreshold = 100;
+//unsigned long SRFmeasurementsArray[NUMBER_OF_REPEATED_MEASURES];
 Servo servo1;  // servo control object
 
 void setup(){
@@ -45,7 +47,7 @@ float measurement(){
 boolean checkNeighborhood(int arrayIndex){
   unsigned long loweNeighborDiff = abs(srfDistanceArray[arrayIndex]-srfDistanceArray[arrayIndex-1]);
   unsigned long upperNeighborDiff = abs(srfDistanceArray[arrayIndex]-srfDistanceArray[arrayIndex+1]);
-  if (loweNeighborDiff<4 || upperNeighborDiff<4){
+  if (loweNeighborDiff<20 || upperNeighborDiff<20){
     return true;
   }
   else{
@@ -68,6 +70,25 @@ int measurementsDataMin(){
   return index;
 }// int measurementsDataMin()
 
+/*
+unsigned long getAverageDistance(){
+  unsigned long averageDistance;
+  unsigned long currentMeasurement;
+  unsigned long sumOfDistances = 0;
+  unsigned int numberOfValidMeasurements = 0;
+  for(int i=0; i<NUMBER_OF_REPEATED_MEASURES-1; i++){
+       currentMeasurement = measurement();
+       delay(10);
+       if(currentMeasurement>5){
+         sumOfDistances = sumOfDistances+currentMeasurement;
+         numberOfValidMeasurements++;
+       }
+  }// for
+  averageDistance = sumOfDistances/numberOfValidMeasurements;
+  return averageDistance;
+}
+*/
+
 void loop(){
   int position;
   int nearestObstaclePosition;
@@ -75,11 +96,11 @@ void loop(){
   servo1.write(0);     // Tell servo to go to 0 degrees
   delay(1000);         // Pause to get it time to move
 
-  for(position = 0; position < 180; position += 5){ // Tell servo to go to 180 degrees, stepping by 5 degrees
+  for(position = 0; position < 180; position += SENSOR_STEP){ // Tell servo to go to 180 degrees, stepping by 5 degrees
     servo1.write(position);  // Move to next position
-    delay(30);               // Short pause to allow it to move, min 20ms
+    delay(31);               // Short pause to allow it to move, min 20ms
     if(arrayIndex<numberOfSteps-1){
-       srfDistanceArray[arrayIndex] = measurement();
+       srfDistanceArray[arrayIndex] = measurement(); //getAverageDistance();
        //arrayIndex++;
     }
     Serial.println("Angle: "+String(position)+ ", Distance: "+String(srfDistanceArray[arrayIndex])+" cm");
