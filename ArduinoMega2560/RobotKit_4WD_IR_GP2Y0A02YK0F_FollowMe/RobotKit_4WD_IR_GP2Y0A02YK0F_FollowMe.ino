@@ -4,7 +4,7 @@ RobotKit_4WD_IR_GP2Y0A02YK0F_FollowMe - Follow the moving object (based on proxi
 www: http://www.mobilerobots.pl
  
  Connections:
- IR Analog Sensors -> Arduino pro Micro
+ IR Analog Sensors -> Arduino Mega 2560
  VIN - 5V
  GND - GND
  VOUT - A7
@@ -46,13 +46,13 @@ void setup(){
   // IR SENSORS
   pinMode(IRsensorFront, INPUT);  // declare Front IR Sensor as input
 
-  //Setup Channel A - Drive Motor
-  pinMode(MotorRight_R_EN, OUTPUT); //Initiates Motor Channel A1 pin
-  pinMode(MotorRight_L_EN, OUTPUT); //Initiates Motor Channel A2 pin
+  //Setup Right Motors 
+  pinMode(MotorRight_R_EN, OUTPUT); 
+  pinMode(MotorRight_L_EN, OUTPUT); 
 
-  //Setup Channel B - Steering Motor
-  pinMode(MotorLeft_R_EN, OUTPUT); //Initiates Motor Channel B1 pin
-  pinMode(MotorLeft_L_EN, OUTPUT); //Initiates Motor Channel B2 pin
+   //Setup Left Motors 
+  pinMode(MotorLeft_R_EN, OUTPUT); 
+  pinMode(MotorLeft_L_EN, OUTPUT); 
   
   //Setup PWM pins as Outputs
   pinMode(Rpwm1, OUTPUT);
