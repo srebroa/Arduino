@@ -1,10 +1,10 @@
 /*
-RobotKit_4WD_IR_GP2Y0A21_FollowMe - Follow the moving object (based on proximity sensor GP2Y0A21) 
+RobotKit_4WD_IR_GP2Y0A21_FollowMe - Follow the moving object (based on proximity sensor GP2Y0A21 10-80 cm) 
 - Tested with Arduino Mega 2560
 www: http://www.mobilerobots.pl
  
  Connections:
- IR Analog Sensors -> Arduino pro Micro
+ IR Analog Sensors -> Arduino Mega 2560
  VIN - 5V
  GND - GND
  VOUT - A7
@@ -18,14 +18,13 @@ www: http://www.mobilerobots.pl
  4 - go_Backward
  */
 #include <math.h>
+#define NUMBER_OF_REPEATED_MEASURES 4
 
 /*MotorDriver_BTS7960*/
 const int MotorRight_R_EN = 4; // Pin to control the clockwise direction of Right Motor
 const int MotorRight_L_EN = 5; // Pin to control the counterclockwise direction of Right Motor 
 const int MotorLeft_R_EN = 8; // Pin to control the clockwise direction of Left Motor
 const int MotorLeft_L_EN = 9; // Pin to control the counterclockwise direction of Left Motor
-// SDA = 2
-// SCL = 3
 const int Rpwm1 = 6; // pwm output - motor A
 const int Lpwm1 = 7; // pwm output - motor B
 const int Rpwm2 = 2; // pwm output - motor A
@@ -45,13 +44,13 @@ void setup(){
   // IR SENSORS
   pinMode(IRsensorFront, INPUT);  // declare Front IR Sensor as input
 
-  //Setup Channel A - Drive Motor
-  pinMode(MotorRight_R_EN, OUTPUT); //Initiates Motor Channel A1 pin
-  pinMode(MotorRight_L_EN, OUTPUT); //Initiates Motor Channel A2 pin
+  //Setup Right Motors 
+  pinMode(MotorRight_R_EN, OUTPUT); 
+  pinMode(MotorRight_L_EN, OUTPUT); 
 
-  //Setup Channel B - Steering Motor
-  pinMode(MotorLeft_R_EN, OUTPUT); //Initiates Motor Channel B1 pin
-  pinMode(MotorLeft_L_EN, OUTPUT); //Initiates Motor Channel B2 pin
+   //Setup Left Motors 
+  pinMode(MotorLeft_R_EN, OUTPUT); 
+  pinMode(MotorLeft_L_EN, OUTPUT); 
   
   //Setup PWM pins as Outputs
   pinMode(Rpwm1, OUTPUT);
@@ -66,23 +65,23 @@ void setup(){
 
 void loop(){  
   //readIRsensors();
-  distanceIRsensorFront = analogRead(IRsensorFront);
-  if(distanceIRsensorFront>350){
+  distanceIRsensorFront = readIRsensor(); //getAverageDistance();
+  if(distanceIRsensorFront>320){
     go_Backwad(100);
   }
-  else if((distanceIRsensorFront>=245 && distanceIRsensorFront<=350)){ // || distanceIRsensorFront<150)
+  else if((distanceIRsensorFront>=245 && distanceIRsensorFront<=320)){ // || distanceIRsensorFront<150)
     stop_Robot();
-    delay(50);
+    delay(100);
   }
   else if(distanceIRsensorFront>=200 && distanceIRsensorFront<245){
     go_Forward(50);
     //resetTurningCounter();
   }
-  else if(distanceIRsensorFront>=150 && distanceIRsensorFront<200){
+  else if(distanceIRsensorFront>=100 && distanceIRsensorFront<200){
     go_Forward(120);
     resetTurningCounter();
   }
-  else if(distanceIRsensorFront<150){
+  else if(distanceIRsensorFront<100){
     if(turnRightCounter<10 ){     
       turn_Right(120);
       turnRightCounter++;
@@ -91,21 +90,34 @@ void loop(){
       stop_Robot();
     }
   }
-  delay(100);
+  delay(50);
 }// void loop()
-
+/*
+int getAverageDistance(){
+  int averageDistance;
+  int currentMeasurement;
+  int sumOfDistances = 0;
+  //unsigned int numberOfValidMeasurements = 0;
+  for(int i=0; i<NUMBER_OF_REPEATED_MEASURES-1; i++){
+       currentMeasurement = readIRsensor();
+       sumOfDistances = sumOfDistances+currentMeasurement;
+       delay(35);
+  }// for
+  averageDistance = (int)(sumOfDistances/NUMBER_OF_REPEATED_MEASURES);
+  return averageDistance;
+}
+*/
 void resetTurningCounter(){
   if(turnRightCounter!=0){
     turnRightCounter = 0;
   }
 }// void resetTurningCounter()
 
-/*
 int readIRsensor(){
   distanceIRsensorFront = analogRead(IRsensorFront);
   return distanceIRsensorFront;
 }// void readIRsensors()
-*/
+
 void go_Robot(){
   SetMotors(1);
   analogWrite(Rpwm1, pwmRvalue);
