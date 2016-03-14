@@ -1,12 +1,15 @@
 /*  MonsterMotoShiel_test - Testing Monster Moto Shield for Arduino */
 #define CW   1
 #define CCW  2
-#define CS_THRESHOLD 100
+#define CS_THRESHOLD 50
+#define PWM_MAX 255
+#define PWM_SLOW 50
+#define RUNNING_TIME_MS 5000
 
 /*  VNH2SP30 pin definitions */
 int INA[2] = {7, 4};  // INA: Clockwise input
 int INB[2] = {8, 9}; // INB: Counter-clockwise input
-int PWM_out[2] = {5, 6}; // PWM_out output
+int PWM_out[2] = {5, 6}; // PWM output
 int CS[2] = {2, 3}; // CS: Current sense analog input
 int EN[2] = {0, 1}; // EN: Status of switches output (Analog pin)
 
@@ -18,20 +21,19 @@ void setup(){
     pinMode(INB[i], OUTPUT);
     pinMode(PWM_out[i], OUTPUT);
   }
-  // Initialize braked
+  // Turn Off all motors
   for (int i=0; i<2; i++){
-    digitalWrite(INA[i], LOW);
-    digitalWrite(INB[i], LOW);
+    motorOff(i);
   }
 }// void setup()
 
 void loop(){
-  motorGo(0, CW, 255);
-  motorGo(1, CW, 255);
-  waitAndTurnMotorsOff(5000);
-  motorGo(0, CCW, 50);
-  motorGo(1, CCW, 50);
-  waitAndTurnMotorsOff(5000);
+  motorGo(0, CW, PWM_MAX);
+  motorGo(1, CW, PWM_MAX);
+  waitAndTurnMotorsOff(RUNNING_TIME_MS);
+  motorGo(0, CCW, PWM_SLOW);
+  motorGo(1, CCW, PWM_SLOW);
+  waitAndTurnMotorsOff(RUNNING_TIME_MS);
 }// void loop()
 
 void printCurrentSense(){
@@ -44,11 +46,12 @@ void printCurrentSense(){
 }// void printCurrentSense()
 
 void waitAndTurnMotorsOff(int time_ms){
+  delay(200);
   printCurrentSense();
   delay(time_ms);
   motorOff(0);
   motorOff(1);
-  delay(500);
+  delay(200);
 }// void waitAndTurnMotorsOff(int time_ms)
 
 void motorOff(int motor){
