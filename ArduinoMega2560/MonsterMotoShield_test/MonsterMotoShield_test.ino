@@ -2,7 +2,7 @@
 #define CW   1
 #define CCW  2
 #define CS_THRESHOLD 50
-#define PWM_MAX 255
+#define PWM_MAX 225
 #define PWM_SLOW 50
 #define RUNNING_TIME_MS 5000
 
@@ -34,6 +34,9 @@ void loop(){
   motorGo(0, CCW, PWM_SLOW);
   motorGo(1, CCW, PWM_SLOW);
   waitAndTurnMotorsOff(RUNNING_TIME_MS);
+  motorGo(0, CCW, PWM_MAX);
+  motorGo(1, CCW, PWM_MAX);
+  waitAndTurnMotorsOff(RUNNING_TIME_MS);
 }// void loop()
 
 void printCurrentSense(){
@@ -51,7 +54,7 @@ void waitAndTurnMotorsOff(int time_ms){
   delay(time_ms);
   motorOff(0);
   motorOff(1);
-  delay(200);
+  delay(2000);
 }// void waitAndTurnMotorsOff(int time_ms)
 
 void motorOff(int motor){
