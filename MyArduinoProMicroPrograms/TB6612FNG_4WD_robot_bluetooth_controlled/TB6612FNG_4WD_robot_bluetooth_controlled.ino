@@ -81,13 +81,13 @@ void loop(){
 void readIRsensors(){
   int IR_FrontValue = analogRead(IRsensorFront);  // read input value from front IR sensor
   int IR_BackValue = analogRead(IRsensorRear);    // read input value from rear IR sensor
-  if(IR_FrontValue>400){ // Sensor Active State is LOW
-    go_Backwad(255);
+  if(IR_FrontValue>400){ 
+    goBackwad(255);
     delay(200);
     stop_Robot();   
   }
   else if (IR_BackValue>400){
-    go_Forward(255);
+    goForward(255);
     delay(200);
     stop_Robot();   
   }
@@ -117,37 +117,37 @@ void processInput (){
     break;
 
   case 'f': // Go FORWARD
-    go_Forward(255);
+    goForward(255);
     //Serial.println("forward");
     break;
 
   case 'b': // Go BACK
-    go_Backwad(255);
+    goBackwad(255);
     //Serial.println("backward");
     break;
 
   case 'r':
-    turn_Right(255);
+    turnRight(255);
     break;
 
   case 'l':
-    turn_Left(255);
+    turnLeft(255);
     break;
 
   case 'c': // Top Right
-    turn_RightForward(255);
+    turnRightForward(255);
     break; 
 
   case 'd': // Top Left
-    turn_LeftForward(255);
+    turnLeftForward(255);
     break;  
 
   case 'e': // Bottom Right
-    turn_RightBack(255);
+    turnRightBack(255);
     break; 
 
   case 'h': // Bottom Left
-    turn_LeftBack(255);
+    turnLeftBack(255);
     break;  
 
   case 's':
@@ -172,87 +172,64 @@ void processInput (){
   } // end of switch
 } // void processInput ()
 
+void motorsControl(int rightMotorsSpeed, int leftMotorsSpeed){
+  if(rightMotorsSpeed>0){
+    digitalWrite(MotorA_AIN1, LOW); 
+    digitalWrite(MotorA_AIN2, HIGH); 
+  }
+  else if(rightMotorsSpeed<0){
+    digitalWrite(MotorA_AIN1, HIGH); 
+    digitalWrite(MotorA_AIN2, LOW); 
+  }  
+  if(leftMotorsSpeed>0){
+    digitalWrite(MotorB_BIN1, LOW); 
+    digitalWrite(MotorB_BIN2, HIGH); 
+  }
+  else if(leftMotorsSpeed<0){
+    digitalWrite(MotorB_BIN1, HIGH); 
+    digitalWrite(MotorB_BIN2, LOW); 
+  } 
+  analogWrite(pwm_A, abs(rightMotorsSpeed));
+  analogWrite(pwm_B, abs(leftMotorsSpeed));
+}
+
 void go_Robot(){
   digitalWrite(MotorA_AIN1, LOW);  
   digitalWrite(MotorA_AIN2, HIGH); 
   analogWrite(pwm_A, pwmRvalue);
 }// void go_Robot()
 
-void go_Forward(int mspeed){
-  digitalWrite(MotorA_AIN1, LOW); 
-  digitalWrite(MotorA_AIN2, HIGH); 
-  analogWrite(pwm_A, mspeed); //Spins the motor on Channel A at mspeed
-  digitalWrite(MotorB_BIN1, LOW); 
-  digitalWrite(MotorB_BIN2, HIGH); 
-  analogWrite(pwm_B, mspeed);
+void goForward(int mspeed){
+  motorsControl(mspeed, mspeed);
 }// void goForward(int mspeed, int time_ms)
 
-void go_Backwad(int mspeed){
-  digitalWrite(MotorA_AIN1, HIGH); 
-  digitalWrite(MotorA_AIN2, LOW); 
-  analogWrite(pwm_A, mspeed);//Spins the motor on Channel A at mspeed
-  digitalWrite(MotorB_BIN1, HIGH); 
-  digitalWrite(MotorB_BIN2, LOW); 
-  analogWrite(pwm_B, mspeed);
+void goBackwad(int mspeed){
+  motorsControl(-mspeed, -mspeed);
 }// void goBackwad(int mspeed, int time_ms)
 
-void turn_Right(int mspeed){
-  //Motor B mspeed full speed
-  digitalWrite(MotorB_BIN1, LOW); 
-  digitalWrite(MotorB_BIN2, HIGH); 
-  analogWrite(pwm_B, mspeed);
-  //Motor A forward mspeed full speed
-  digitalWrite(MotorA_AIN1, HIGH); 
-  digitalWrite(MotorA_AIN2, LOW); 
-  analogWrite(pwm_A, mspeed);
+void turnRight(int mspeed){
+  motorsControl(-mspeed, mspeed);
 }// void goBackwad(int mspeed, int time_ms)
 
-void turn_Left(int mspeed){
-  //Motor B mspeed full speed
-  digitalWrite(MotorB_BIN1, HIGH); 
-  digitalWrite(MotorB_BIN2, LOW); 
-  analogWrite(pwm_B, mspeed);
-  //Motor A forward mspeed full speed
-  digitalWrite(MotorA_AIN1, LOW); 
-  digitalWrite(MotorA_AIN2, HIGH); 
-  analogWrite(pwm_A, mspeed);
-}// void turn_Left(int mspeed)
+void turnLeft(int mspeed){
+  motorsControl(mspeed, -mspeed);
+}// void turnLeft(int mspeed)
 
-void turn_RightForward(int mspeed){
-  digitalWrite(MotorA_AIN1, LOW); 
-  digitalWrite(MotorA_AIN2, HIGH); 
-  analogWrite(pwm_A, mspeed*0.4); //Spins the motor on Channel A at mspeed
-  digitalWrite(MotorB_BIN1, LOW); 
-  digitalWrite(MotorB_BIN2, HIGH); 
-  analogWrite(pwm_B, mspeed);
+void turnRightForward(int mspeed){
+  motorsControl(mspeed*0.4, mspeed);
 }
 
-void turn_LeftForward(int mspeed){
-  digitalWrite(MotorA_AIN1, LOW); 
-  digitalWrite(MotorA_AIN2, HIGH); 
-  analogWrite(pwm_A, mspeed); //Spins the motor on Channel A at mspeed
-  digitalWrite(MotorB_BIN1, LOW); 
-  digitalWrite(MotorB_BIN2, HIGH); 
-  analogWrite(pwm_B, mspeed*0.4);
+void turnLeftForward(int mspeed){
+  motorsControl(mspeed, mspeed*0.4);
 }
 
-void turn_RightBack(int mspeed){
-  digitalWrite(MotorA_AIN1, HIGH); 
-  digitalWrite(MotorA_AIN2, LOW); 
-  analogWrite(pwm_A, mspeed*0.4); 
-  digitalWrite(MotorB_BIN1, HIGH); 
-  digitalWrite(MotorB_BIN2, LOW); 
-  analogWrite(pwm_B, mspeed);
+void turnRightBack(int mspeed){
+  motorsControl(-mspeed*0.4, -mspeed);
 }// void goBackwad(int mspeed, int time_ms)
 
-void turn_LeftBack(int mspeed){
-  digitalWrite(MotorA_AIN1, HIGH); 
-  digitalWrite(MotorA_AIN2, LOW); 
-  analogWrite(pwm_A, mspeed); 
-  digitalWrite(MotorB_BIN1, HIGH); 
-  digitalWrite(MotorB_BIN2, LOW); 
-  analogWrite(pwm_B, mspeed*0.4);
-}// turn_LeftBack(int mspeed)
+void turnLeftBack(int mspeed){
+  motorsControl(-mspeed, -mspeed*0.4);
+}// turnLeftBack(int mspeed)
 
 void stopRobot(int delay_ms){
   analogWrite(pwm_A, 0);
