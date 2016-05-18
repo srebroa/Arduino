@@ -4,6 +4,10 @@ a45     // base rotation - analog servo
 b90
 c45
 a45b45c45
+
+// gripper control
+g120c // close half speed
+g255o // open full speed
 */
 #include <Servo.h>
 #define SERVO1_MIN 10
@@ -17,6 +21,12 @@ a45b45c45
 #define SERVO2_PWM_PIN 5
 #define SERVO3_PWM_PIN 6
 
+/*TB6612FNG Dual Motor Driver Carrier*/
+#define GRIPPER_MOTOR_PWM 11 // pwm output
+#define GRIPPER_MOTOR_AIN1 12 
+#define GRIPPER_MOTOR_AIN2 13
+
+/*Servos*/
 Servo servo1;
 Servo servo2;
 Servo servo3;
@@ -64,6 +74,16 @@ void processInput (){
       setServo(3, deg);
       break;
     }
+    
+    case 'g':
+    {
+      // Gripper Control
+      int mspeed = Serial.parseInt(); //max 255
+      char mdirection = Serial.read ();
+      Serial.println("mspeed: "+String(mspeed)+" mdirection: "+String(mdirection));
+      gripperControl(mdirection, mspeed);
+      break;
+    }
     case 'p':
     {
       // Set Default Position
@@ -78,7 +98,21 @@ void processInput (){
       break;
     }
   }// switch (c)
-}
+}// void processInput ()
+
+void gripperControl(char mdirection, int mspeed){
+  if (mdirection == 'c'){
+    digitalWrite(GRIPPER_MOTOR_AIN1, LOW); 
+    digitalWrite(GRIPPER_MOTOR_AIN2, HIGH); 
+  }
+  else if (mdirection == 'o'){
+    digitalWrite(GRIPPER_MOTOR_AIN1, HIGH); 
+    digitalWrite(GRIPPER_MOTOR_AIN2, LOW); 
+  }
+  analogWrite(GRIPPER_MOTOR_PWM, mspeed);
+  delay(500);
+  analogWrite(GRIPPER_MOTOR_PWM, 0);
+}// void gripperControl(int mdirection, int mspeed)
 
 void printServosPosition(){
    Serial.println("servo1: "+String(servo1_val));
