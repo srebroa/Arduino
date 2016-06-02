@@ -1,5 +1,5 @@
 /*
-Arduino Due + HC-05 bluetooth + servos
+Arduino Due + HC-05 bluetooth + servos + oled
 - servos controlled via bluetooth
 
 Serial (Tx/Rx) communicate to PC via USB
@@ -8,6 +8,12 @@ HC-05 Rx - Due Tx1 (18)
 HC-05 Tx - Due Rx1 (19)
 HC-05 GND - Due GND
 HC-05 VCC - Due 3.3V
+
+// OLED 128x64 -> DUE
+Vcc - 3.3V
+Gnd - Gnd
+Scl - Scl (21)
+Sda - Sda (20)
 
 Examples:
 a45     // base rotation - analog servo
@@ -21,6 +27,10 @@ g255o // open full speed
 */
 
 #include <Servo.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #define HC05 Serial1
 #define LED 2
@@ -41,6 +51,13 @@ g255o // open full speed
 #define GRIPPER_MOTOR_AIN1 12 
 #define GRIPPER_MOTOR_AIN2 13
 
+#define OLED_RESET 4
+Adafruit_SSD1306 display(OLED_RESET);
+
+#if (SSD1306_LCDHEIGHT != 64)
+#error("Height incorrect, please fix Adafruit_SSD1306.h!");
+#endif
+
 Servo servoBase;
 Servo servoShoulder;
 Servo servoElbow;
@@ -51,7 +68,8 @@ int servoElbow_val;
 
 void setup(){
   pinMode(LED, OUTPUT);
-  flashLed(500);
+  setOledDisplay();
+  flashLed(300);
   Serial.begin(9600);
   HC05.begin(9600);
   HC05.setTimeout(10);
@@ -63,6 +81,20 @@ void setup(){
   servoBase_val = servoBase.read();
   servoShoulder_val = servoShoulder.read();
   servoElbow_val = servoElbow.read();
+}
+
+void setOledDisplay(){
+    // Set up the display
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // Initialize with the I2C addr 0x3D if not working use 0x3C (for the 128x64)
+  //display.setTextColor(WHITE);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(25,0);
+  display.println("instructables");
+  display.println();
+  display.display();
+  delay(2000);
 }
 
 void loop(){
@@ -169,19 +201,33 @@ void setServo(int servoNumber, int deg){
   if(servoNumber==1 && deg>=BASE_MIN && deg<=BASE_MAX){
     servoBase.write(deg);
     servoBase_val = servoBase.read();
-    Serial.println("servoBase: "+String(servoBase_val));
+    Serial.println("servoBase: "+String(servoBase_val));    
+    DisplayAngleOnOled("B:",servoBase_val);
   }
   else if(servoNumber==2 && deg>=SHOULDER_MIN && deg<=SHOULDER_MAX){
     servoShoulder.write(deg);
     servoShoulder_val = servoShoulder.read();
-    Serial.println("servoShoulder: "+String(servoShoulder_val));
+    Serial.println("servoShoulder: "+String(servoShoulder_val));   
+    DisplayAngleOnOled("S:",servoShoulder_val); 
   }
   else if(servoNumber==3 && deg>=ELBOW_MIN && deg<=ELBOW_MAX){
     servoElbow.write(deg);
     servoElbow_val = servoElbow.read();
-    Serial.println("servoElbow: "+String(servoElbow_val));
+    Serial.println("servoElbow: "+String(servoElbow_val));    
+    DisplayAngleOnOled("E:",servoElbow_val); 
   }
 }// void setServo(int servoNumber, int deg)
+
+void DisplayAngleOnOled(String armString, int agle){
+    display.clearDisplay();
+    display.setTextSize(3);
+    display.setTextColor(WHITE);
+    display.setCursor(20,20);
+    display.print(armString);
+    display.println(agle);
+    display.println();
+    display.display();
+}
 
 
 
