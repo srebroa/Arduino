@@ -39,12 +39,13 @@ g255o // open full speed
 #define HC05 Serial1
 #define LED 2
 
-#define BASE_MIN 15
-#define BASE_MAX 170
+#define BASE_MIN 5
+#define BASE_MAX 175
 #define SHOULDER_MIN 15
 #define SHOULDER_MAX 170
 #define ELBOW_MIN 15
 #define ELBOW_MAX 170
+#define DEFAULT_SERVO_ANGLE 90
 
 #define BASE_PWM_PIN 3 // Base
 #define SHOULDER_PWM_PIN 5 // Shoulder
@@ -56,7 +57,8 @@ g255o // open full speed
 #define GRIPPER_MOTOR_AIN2 13
 
 //Control State
-#define SEMI_AUTONOMOUS 1
+#define MANUAL_CONTROL 0
+#define SEMI_AUTONOMOUS_CONTROL 1
 
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
@@ -83,8 +85,17 @@ int distanceSensorFrontPin = 1;
 int distanceSensorLeftPin = 2;
 int detectionThreshold;
 
-int controlState = 0;
+// Memory variables
+int baseCurrentPosition = 0; // Position of the Front Sensor
+
+int controlState = 0; // 0 - manual control, 1 - semi autonomous control
 int baseServoSpeedFlag = 1;
+int currentRoboticArmState; // 0;
+/*
+0 - waiting for object - default robotic arm position
+1 - gripping position
+2 - obstacle searching position
+*/
 
 
 void setup(){
@@ -112,20 +123,46 @@ void initializeServos(){
 }
 
 void initializeDistanceSensors(){
-  detectionThreshold = 440; // can be changed as needed ;)
+  detectionThreshold = 380; //400 can be changed as needed ;)
   distanceSensorRight = 0;
   distanceSensorFront = 0;
   distanceSensorLeft = 0; 
 }
 
 void setDefaulRoboticArmPosition(){
-  setServoBasePosition(90);
-  setServo(2, 90);
-  setServo(3, 90);
-  
+  //setServoBasePosition(DEFAULT_SERVO_ANGLE);
+  setServo(1, DEFAULT_SERVO_ANGLE);
+  setServo(2, DEFAULT_SERVO_ANGLE);
+  setServo(3, DEFAULT_SERVO_ANGLE);
+  //gripperControl('c', 250);
   servoBase_val = servoBase.read();
   servoShoulder_val = servoShoulder.read();
   servoElbow_val = servoElbow.read();
+  currentRoboticArmState = 0;
+}
+
+void setGrippingRoboticArmPosition(){
+  if(currentRoboticArmState!=1){
+    setServo(2, 155);
+    setServo(3, 75);
+    gripperControl('o', 255);
+    gripperControl('o', 255);
+    servoShoulder_val = servoShoulder.read();
+    servoElbow_val = servoElbow.read();
+    currentRoboticArmState=1;
+  }
+}
+
+void setObstacleSearchingRoboticArmPosition(){
+  if(currentRoboticArmState!=2){
+    gripperControl('c', 255);
+    gripperControl('c', 255);
+    setServo(2, 90); // Shoulder
+    setServo(3, 55);  // Elbow
+    servoShoulder_val = servoShoulder.read();
+    servoElbow_val = servoElbow.read();
+    currentRoboticArmState=2;
+  }
 }
 
 void setOledDisplay(){
@@ -145,10 +182,9 @@ void setOledDisplay(){
 void loop(){
   int detection = readDistanceSensors(); 
   //Serial.println("Detection: " +String(detection));
-  if(controlState==SEMI_AUTONOMOUS){
+  if(controlState==SEMI_AUTONOMOUS_CONTROL){
     checkIfObjectWasDetected(detection);
-  }
-  
+  } 
   while(HC05.available()){
     processInput();
   }
@@ -157,16 +193,15 @@ void loop(){
 void checkIfObjectWasDetected(int detection){
   //int targetServoPosition; 
   if(detection==1){ // position of the right sensor
-    //targetServoPosition = 0;
-    setServoBasePosition(0);
+    setObstacleSearchingRoboticArmPosition();
+    setServoBaseDirection(0); // move right
   }
   else if(detection==2){ // position of the front sensor
-    //targetServoPosition = 90;
-    setServoBasePosition(90);
+    setGrippingRoboticArmPosition();
   }
   else if(detection==3){ // position of the left sensor
-    //targetServoPosition = 180;
-    setServoBasePosition(180);
+    setObstacleSearchingRoboticArmPosition();
+    setServoBaseDirection(1); // move left
   }
   else{
     // not found any object
@@ -178,6 +213,22 @@ void checkIfObjectWasDetected(int detection){
 void processInput (){
   byte c = HC05.read ();
   switch (c){    
+    
+    case 'a': // Base
+    {   
+      Serial.println("Semi autonomous control");
+      controlState=SEMI_AUTONOMOUS_CONTROL;
+      DisplayControlStateOnOled("auto");
+      break;
+    }
+    
+    case 'm': // Base
+    {   
+      Serial.println("Manual control");
+      controlState=MANUAL_CONTROL;
+      DisplayControlStateOnOled("manual");
+      break;
+    }
     
     case 'b': // Base
     {   
@@ -234,7 +285,7 @@ int readDistanceSensors(){
     distanceSensorFront = analogRead(distanceSensorFrontPin);
     distanceSensorLeft = analogRead(distanceSensorLeftPin);
     
-    Serial.println("SensorRight: "+String(distanceSensorRight)+", SensorFront: "+String(distanceSensorFront)+", SensorLeft: "+String(distanceSensorLeft));
+    //Serial.println("SensorRight: "+String(distanceSensorRight)+", SensorFront: "+String(distanceSensorFront)+", SensorLeft: "+String(distanceSensorLeft));
     
     if(distanceSensorFront>detectionThreshold){
       detection = 2;
@@ -247,6 +298,16 @@ int readDistanceSensors(){
     }   
     return detection;
 }// int readDistanceSensors() 
+
+int readFrontSensor(){
+  int detection = 0;
+  distanceSensorFront = analogRead(distanceSensorFrontPin);
+  if(distanceSensorFront>detectionThreshold){
+      Serial.println("Object Detected - FRONT");
+      detection = 1;
+  }
+  return detection;
+}
 
 void gripperControl(char mdirection, int mspeed){
   if (mdirection == 'o'){
@@ -291,34 +352,44 @@ void turnLed(int state){
   }
 }
 
-void setServoBasePosition(int targetPosition){
-  if(servoBase_val==targetPosition){
-    // do nothing
-  }
-  else if(baseServoSpeedFlag==0){
-      if(servoBase_val<targetPosition){
-        for(servoBase_val; servoBase_val<targetPosition; servoBase_val +=1)// in steps of 1 degree   
+void setServoBaseDirection(int baseServoDirection){
+  servoBase_val = servoBase.read();
+  Serial.println("servoBase: "+String(servoBase_val));
+  if(baseServoDirection==0){ // move right
+      Serial.println("move right");
+      if(servoBase_val<BASE_MAX){
+        for(servoBase_val; servoBase_val<BASE_MAX; servoBase_val +=1)// in steps of 1 degree   
         {                                 
           servoBase.write(servoBase_val); // tell servo to go to "currentServoPosition" 
-          delay(15);                       // waits 15ms for the servo to reach the position 
-        } 
-      }
-      
-      else if(servoBase_val>targetPosition){
-          for(servoBase_val; servoBase_val>targetPosition; servoBase_val -=1)  
-          {                                  
-            servoBase.write(servoBase_val);              
-            delay(15);                      
-          } 
-      }
+          delay(10);                       // waits 15ms for the servo to reach the position 
+          //Serial.println("servoBaseN: "+String(servoBase_val));
+          if(readFrontSensor()==1){
+            break;
+          }
+        }// for 
+      }// if
+      servoBase.write(servoBase_val+10);
+      delay(20); 
   }
-  else{
-          servoBase.write(targetPosition);      // tell servo to go to "targetPosition"
-          delay(100);
-          servoBase_val=targetPosition;
+  else{ // move right
+      Serial.println("move left");
+      if(servoBase_val>BASE_MIN){
+        for(servoBase_val; servoBase_val>BASE_MIN; servoBase_val -=1)// in steps of 1 degree   
+        {                                 
+          servoBase.write(servoBase_val); // tell servo to go to "currentServoPosition" 
+          delay(10);                       // waits 15ms for the servo to reach the position 
+          //Serial.println("servoBaseN: "+String(servoBase_val));
+          if(readFrontSensor()==1){
+            break;
+          }
+        }// for 
+      }// if
+      servoBase.write(servoBase_val+10);
+      delay(20); 
   }
   delay(1000);
-}// void setServoPosition(int targetPosition)
+  setGrippingRoboticArmPosition();
+}// void setServoBasePosition(int baseServoDirection)
 
 void setServo(int servoNumber, int deg){
   if(servoNumber==1 && deg>=BASE_MIN && deg<=BASE_MAX){
@@ -358,6 +429,16 @@ void DisplayGripperStateOnOled(String gripperStateString){
     display.setTextColor(WHITE);
     display.setCursor(20,20);
     display.print(gripperStateString);
+    display.println();
+    display.display();
+}
+
+void DisplayControlStateOnOled(String controlStateString){    
+    display.clearDisplay();
+    display.setTextSize(3);
+    display.setTextColor(WHITE);
+    display.setCursor(5,20);
+    display.print(controlStateString);
     display.println();
     display.display();
 }
