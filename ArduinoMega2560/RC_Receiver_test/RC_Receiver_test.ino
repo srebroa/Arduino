@@ -1,10 +1,12 @@
 /*
-Testing FlySky FS 2.4GHz Receiver Connected to Arduino
+Testing FrSky V8FR-II 2.4GHz Receiver Connected to Arduino.
+Taranis Q X7 2.4GHz 7CH Transmitter is set up in Mode2 - Right control stick: Aileron, Elevator 
 - Tested with Arduino Mega 2560
 www: http://www.mobilerobots.pl
+How to bind FrSky V8FR-II to Taranis Q X7: https://www.youtube.com/watch?v=FN0vjDh2Pdg 
  
  Connections:
- FlySky FS 2.4GHz Receiver -> Arduino Mega 2560
+ FrSky V8FR-II 2.4GHz Receiver -> Arduino Mega 2560
  ch2 - 7 // Aileron
  ch3 - 8 // Elevator
  */
@@ -14,7 +16,7 @@ www: http://www.mobilerobots.pl
 #define LOWER_STOP_RANGE_TURN -20
 #define UPPER_STOP_RANGE_TURN 20
  
-/*FlySky FS 2.4GHz Receiver*/
+/*FrSky V8FR-II 2.4GHz Receiver*/
 //const int Channel1 = 6; 
 const int Channel2 = 7;
 const int Channel3 = 8;
@@ -31,11 +33,6 @@ int moveValue;
 int turnValue;
 
 void setup(){
-  /*
-  For Arduino Mega 2560
-  Serial1 RX - pin 19
-  Serial1 TX - pin 18
-  */
   //pinMode(6, INPUT); //6
   pinMode(Channel2, INPUT); //7
   pinMode(Channel3, INPUT); //8
