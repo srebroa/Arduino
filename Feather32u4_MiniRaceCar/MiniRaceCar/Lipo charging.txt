@@ -1,0 +1,4 @@
+Quoating from the link: https://learn.adafruit.com/adafruit-feather-32u4-basic-proto/power-management
+
+"When the USB power is powered, it will automatically switch over to USB for power, as well as start charging the battery (if attached) at 100mA. This happens 'hotswap' style so you can always keep the Lipoly connected as a 'backup' power that will only get used when USB power is lost."
+
